@@ -1,7 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import globalVar
-
 import gi
 import sys
 import os
@@ -58,10 +56,13 @@ class Example:
     #get text function to link to activate
     def btn_proceed (self,widget):
         chkbox_img = self.builder.get_object("checkbox_image")
+        chkbox_vid = self.builder.get_object("checkbox_video")
         if chkbox_img.get_active():
             os.system('python3 test4.py')
+        elif chkbox_vid.get_active():
+            os.system('python3 test3.py')
         else:
-            print("run script for webcam")
+            print("No Data Source")
 
 
     def on_checkb1_toggled(self, button):

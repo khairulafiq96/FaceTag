@@ -20,6 +20,14 @@ import pickle
 from sklearn.svm import SVC
 from sklearn.externals import joblib
 
+#reading videoLink
+import configparser
+
+config = configparser.ConfigParser()
+config.read("myConfig.ini")
+videoLink = config.get("myVars", "webcamLink")
+#
+
 print('Creating networks and loading parameters')
 with tf.Graph().as_default():
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.6)
@@ -37,7 +45,7 @@ with tf.Graph().as_default():
         input_image_size = 160
 
         print('Loading feature extraction model')
-        modeldir = '/home/snow/Desktop/Face-Tag/models/20180402-114759.pb'
+        modeldir = '/home/afiq/Desktop/facetag/Face-Tag/models/20180402-114759.pb'
         facenet.load_model(modeldir)
 
         images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
@@ -45,13 +53,14 @@ with tf.Graph().as_default():
         phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
         embedding_size = embeddings.get_shape()[1]
 
-        classifier_filename = '/home/snow/Desktop/Face-Tag/models/ft_v1__classifier.pkl'
+        classifier_filename = '/home/afiq/Desktop/facetag/Face-Tag/models/ft_v1__classifier.pkl'
         classifier_filename_exp = os.path.expanduser(classifier_filename)
         with open(classifier_filename_exp, 'rb') as infile:
             (model, class_names) = pickle.load(infile)
             print('load classifier file-> %s' % classifier_filename_exp)
 
-        video_capture = cv2.VideoCapture(0)
+        #video_capture = cv2.VideoCapture(0) #webcam
+        video_capture = cv2.VideoCapture(videoLink)
         c = 0
 
         # #video writer
@@ -119,7 +128,7 @@ with tf.Graph().as_default():
                         print(best_class_indices)
                         best_class_probabilities = predictions[np.arange(
                             len(best_class_indices)), best_class_indices]
-                        print(best_class_probabilities)
+                        # print(best_class_probabilities)
                         cv2.rectangle(frame, (bb[i][0], bb[i][1]),
                                       (bb[i][2], bb[i][3]), (0, 255, 0), 2)  # boxing face
 
@@ -127,6 +136,7 @@ with tf.Graph().as_default():
                         text_x = bb[i][0]
                         text_y = bb[i][3] + 20
                         result_names = class_names[best_class_indices[i]]
+                        print(result_names)
                         cv2.putText(frame, result_names, (text_x, text_y),
                                     cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255),
                                     thickness=2, lineType=2)
