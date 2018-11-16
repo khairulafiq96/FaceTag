@@ -45,7 +45,7 @@ with tf.Graph().as_default():
         input_image_size = 160
 
         print('Loading feature extraction model')
-        modeldir = '/home/afiq/Desktop/facetag/Face-Tag/models/20180402-114759.pb'
+        modeldir = '/home/afiq/Desktop/facetagAfiq/FaceTag/models/20180402-114759.pb'
         facenet.load_model(modeldir)
 
         images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
@@ -53,7 +53,7 @@ with tf.Graph().as_default():
         phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
         embedding_size = embeddings.get_shape()[1]
 
-        classifier_filename = '/home/afiq/Desktop/facetag/Face-Tag/models/ft_v2__classifier.pkl'
+        classifier_filename = '/home/afiq/Desktop/facetagAfiq/FaceTag/models/ft_v2__classifier.pkl'
         classifier_filename_exp = os.path.expanduser(classifier_filename)
         with open(classifier_filename_exp, 'rb') as infile:
             (model, class_names) = pickle.load(infile)
