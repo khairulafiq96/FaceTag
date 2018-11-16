@@ -22,6 +22,13 @@ import pickle
 from sklearn.svm import SVC
 from sklearn.externals import joblib
 
+import csv
+import datetime
+
+import mysql.connector
+from mysql.connector import Error
+import datetime
+
 config = configparser.ConfigParser()
 config.read("myConfig.ini")
 var_a = config.get("myVars", "globalFilepath")
@@ -45,7 +52,7 @@ with tf.Graph().as_default():
         input_image_size = 160
 
         print('Loading feature extraction model')
-        modeldir = '/home/afiq/Desktop/facetagAfiq/FaceTag/models/20180402-114759.pb'
+        modeldir = '/home/afiq/Desktop/facetag/Face-Tag/models/20180402-114759.pb'
         facenet.load_model(modeldir)
 
         images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
@@ -53,10 +60,10 @@ with tf.Graph().as_default():
         phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
         embedding_size = embeddings.get_shape()[1]
 
-        classifier_filename = '/home/afiq/Desktop/facetagAfiq/FaceTag/models/ft_v2__classifier.pkl'
+        classifier_filename = '/home/afiq/Desktop/facetag/Face-Tag/models/ft_v2__classifier.pkl'
         classifier_filename_exp = os.path.expanduser(classifier_filename)
         with open(classifier_filename_exp, 'rb') as infile:
-            (model, class_names) = pickle.load(infile)
+            (model, class_names) = pickle.load(infile) #encoding='latin1'
             print('load classifier file-> %s' % classifier_filename_exp)
 
         c = 0
@@ -124,7 +131,7 @@ with tf.Graph().as_default():
                         len(best_class_indices)), best_class_indices]
                     print(best_class_probabilities)
 
-                    if best_class_probabilities[0] > 0.25:
+                    if best_class_probabilities[0] > 0.3136:
 
                         cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2],
                                                                     bb[i][3]), (0, 255, 0), 2)  # boxing face
@@ -138,7 +145,58 @@ with tf.Graph().as_default():
                                     cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255),
                                     thickness=1, lineType=2)
 
-                    elif best_class_probabilities[0] > 0.10:
+                        #insert datastamp into file
+                        out_file = open("writeTime.csv", "a")
+                        writer = csv.writer(out_file)
+
+                        try:
+                           connection = mysql.connector.connect(host='localhost',
+                                                     database='facetagDatabase',
+                                                     user='root',
+                                                     password='')
+
+
+
+                           username = result_names
+                           date_in = datetime.datetime.now().strftime("%y/%m/%d") #input
+                           time_in = datetime.datetime.now().strftime("%H:%M")
+                           time_out = datetime.datetime.now().strftime("%H:%M")
+
+                           sql_select_query = "SELECT * FROM userData WHERE username = %s AND date = %s"
+                           val = (username,date_in)
+                           cursor = connection.cursor()
+                           cursor.execute(sql_select_query, val)
+                           records = cursor.fetchall()
+
+                           print("Total number of rows ", cursor.rowcount)
+
+                           if cursor.rowcount == 0:
+                               sql_insert_query = "INSERT INTO userData (username, date, time_in) VALUES (%s,%s,%s)"
+                               val = (username,date_in,time_in)
+                               cursor = connection.cursor()
+                               result  = cursor.execute(sql_insert_query,val)
+                               connection.commit()
+                               print ("Record inserted successfully into User table")
+                           else:
+                                for row in records:
+                                    if row[0] == username and row[1] == date_in:
+                                         sql_update_query = "UPDATE userData SET time_out = %s WHERE username = %s"
+                                         val = (time_out,username)
+                                         cursor = connection.cursor()
+                                         result  = cursor.execute(sql_update_query,val)
+                                         connection.commit()
+                           cursor.close()
+
+                        except Error as e :
+                            print ("Error while connecting to MySQL", e)
+                        finally:
+                            #closing database connection.
+                            if(connection.is_connected()):
+                                connection.close()
+                                print("connection is closed")
+
+
+                    elif best_class_probabilities[0] > 0.01:
 
                         cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2],
                                                                     bb[i][3]), (0, 255, 0), 2)  # boxing face

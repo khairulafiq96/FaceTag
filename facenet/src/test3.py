@@ -20,6 +20,10 @@ import pickle
 from sklearn.svm import SVC
 from sklearn.externals import joblib
 
+import mysql.connector
+from mysql.connector import Error
+import datetime
+
 #reading videoLink
 import configparser
 
@@ -53,14 +57,14 @@ with tf.Graph().as_default():
         phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
         embedding_size = embeddings.get_shape()[1]
 
-        classifier_filename = '/home/afiq/Desktop/facetag/Face-Tag/models/ft_v1__classifier.pkl'
+        classifier_filename = '/home/afiq/Desktop/facetag/Face-Tag/models/ft_v2__classifier.pkl' #when using v2 the webcam crashes immediately
         classifier_filename_exp = os.path.expanduser(classifier_filename)
         with open(classifier_filename_exp, 'rb') as infile:
             (model, class_names) = pickle.load(infile)
             print('load classifier file-> %s' % classifier_filename_exp)
 
-        #video_capture = cv2.VideoCapture(0) #webcam
-        video_capture = cv2.VideoCapture(videoLink)
+        video_capture = cv2.VideoCapture(videoLink) #webcam
+        #video_capture = cv2.VideoCapture(videoLink)
         c = 0
 
         # #video writer
@@ -129,18 +133,78 @@ with tf.Graph().as_default():
                         best_class_probabilities = predictions[np.arange(
                             len(best_class_indices)), best_class_indices]
                         # print(best_class_probabilities)
-                        cv2.rectangle(frame, (bb[i][0], bb[i][1]),
-                                      (bb[i][2], bb[i][3]), (0, 255, 0), 2)  # boxing face
 
-                        # plot result idx under box
-                        text_x = bb[i][0]
-                        text_y = bb[i][3] + 20
-                        result_names = class_names[best_class_indices[i]]
-                        print(result_names)
-                        cv2.putText(frame, result_names, (text_x, text_y),
-                                    cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255),
-                                    thickness=2, lineType=2)
+                        if best_class_probabilities[0] > 0.3136:
 
+                            cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2],
+                                                                        bb[i][3]), (0, 255, 0), 2)  # boxing face
+
+                            # plot result idx under box DETECTED FACES
+                            text_x = bb[i][0]
+                            text_y = bb[i][3] + 20
+                            result_names = class_names[best_class_indices[0]]
+                            print(result_names)
+                            cv2.putText(frame, result_names, (text_x, text_y),
+                                        cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255),
+                                        thickness=1, lineType=2)
+                            try:
+                               connection = mysql.connector.connect(host='localhost',
+                                                         database='facetagDatabase',
+                                                         user='root',
+                                                         password='')
+
+
+                               username = result_names
+                               date_in = datetime.datetime.now().strftime("%y/%m/%d") #input
+                               time_in = datetime.datetime.now().strftime("%H:%M")
+                               time_out = datetime.datetime.now().strftime("%H:%M")
+
+                               sql_select_query = "SELECT * FROM userData WHERE username = %s AND date = %s"
+                               val = (username,date_in)
+                               cursor = connection.cursor()
+                               cursor.execute(sql_select_query, val)
+                               records = cursor.fetchall()
+
+                               print("Total number of rows ", cursor.rowcount)
+
+                               if cursor.rowcount == 0:
+                                   sql_insert_query = "INSERT INTO userData (username, date, time_in,time_out) VALUES (%s,%s,%s,%s)"
+                                   val = (username,date_in,time_in,time_out)
+                                   cursor = connection.cursor()
+                                   result  = cursor.execute(sql_insert_query,val)
+                                   connection.commit()
+                                   print ("Record inserted successfully into User table")
+                               else:
+                                    for row in records:
+                                        if row[0] == username and row[1] == date_in and row[3] != time_out:
+                                             sql_update_query = "UPDATE userData SET time_out = %s WHERE username = %s"
+                                             val = (time_out,username)
+                                             cursor = connection.cursor()
+                                             result  = cursor.execute(sql_update_query,val)
+                                             connection.commit()
+
+                               cursor.close()
+
+                            except Error as e :
+                                print ("Error while connecting to MySQL", e)
+                            finally:
+                                #closing database connection.
+                                if(connection.is_connected()):
+                                    connection.close()
+                                    print("connection is closed")
+
+
+                        elif best_class_probabilities[0] > 0.01:
+
+                            cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2],
+                                                                        bb[i][3]), (0, 255, 0), 2)  # boxing face
+
+                            # plot result idx under box UNKNOWN
+                            text_x = bb[i][0]
+                            text_y = bb[i][3] + 20
+                            cv2.putText(frame, "Unknown", (text_x, text_y),
+                                        cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255),
+                                        thickness=1, lineType=2)
                 else:
                     print('Unable to align')
 
