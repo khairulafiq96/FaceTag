@@ -158,9 +158,11 @@ with tf.Graph().as_default():
 
 
                            username = result_names
-                           date_in = datetime.datetime.now().strftime("%y/%m/%d") #input
+                           date_in = datetime.datetime.now().strftime("%d/%m/%y") #input
                            time_in = datetime.datetime.now().strftime("%H:%M")
                            time_out = datetime.datetime.now().strftime("%H:%M")
+
+                           print(date_in)
 
                            sql_select_query = "SELECT * FROM userData WHERE username = %s AND date = %s"
                            val = (username,date_in)
@@ -180,8 +182,8 @@ with tf.Graph().as_default():
                            else:
                                 for row in records:
                                     if row[0] == username and row[1] == date_in:
-                                         sql_update_query = "UPDATE userData SET time_out = %s WHERE username = %s"
-                                         val = (time_out,username)
+                                         sql_update_query = "UPDATE userData SET time_out = %s WHERE username = %s AND date = %s"
+                                         val = (time_out,username,date_in)
                                          cursor = connection.cursor()
                                          result  = cursor.execute(sql_update_query,val)
                                          connection.commit()

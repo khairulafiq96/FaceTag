@@ -111,11 +111,14 @@ with tf.Graph().as_default():
 
                         # inner exception
                         if bb[i][0] <= 0 or bb[i][1] <= 0 or bb[i][2] >= len(frame[0]) or bb[i][3] >= len(frame):
-                            print('face is inner of range!')
+                            print('facelie is inner of range!')
                             continue
 
                         cropped.append(frame[bb[i][1]:bb[i][3], bb[i][0]:bb[i][2], :])
-                        cropped[i] = facenet.flip(cropped[i], False)
+                        try:
+                            cropped[i] = facenet.flip(cropped[i], False)
+                        except:
+                            continue
                         scaled.append(misc.imresize(
                             cropped[i], (image_size, image_size), interp='bilinear'))
                         scaled[i] = cv2.resize(scaled[i], (input_image_size, input_image_size),
@@ -155,7 +158,7 @@ with tf.Graph().as_default():
 
 
                                username = result_names
-                               date_in = datetime.datetime.now().strftime("%y/%m/%d") #input
+                               date_in = datetime.datetime.now().strftime("%d/%m/%y") #input
                                time_in = datetime.datetime.now().strftime("%H:%M")
                                time_out = datetime.datetime.now().strftime("%H:%M")
 
@@ -177,8 +180,8 @@ with tf.Graph().as_default():
                                else:
                                     for row in records:
                                         if row[0] == username and row[1] == date_in and row[3] != time_out:
-                                             sql_update_query = "UPDATE userData SET time_out = %s WHERE username = %s"
-                                             val = (time_out,username)
+                                             sql_update_query = "UPDATE userData SET time_out = %s WHERE username = %s AND date = %s"
+                                             val = (time_out,username,date_in)
                                              cursor = connection.cursor()
                                              result  = cursor.execute(sql_update_query,val)
                                              connection.commit()
@@ -202,7 +205,9 @@ with tf.Graph().as_default():
                             # plot result idx under box UNKNOWN
                             text_x = bb[i][0]
                             text_y = bb[i][3] + 20
-                            cv2.putText(frame, "Unknown", (text_x, text_y),
+                            result_names = class_names[best_class_indices[0]]
+                            print("Most Probably : " + result_names)
+                            cv2.putText(frame, "Probably: "+result_names, (text_x, text_y),
                                         cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255),
                                         thickness=1, lineType=2)
                 else:
