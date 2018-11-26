@@ -57,7 +57,7 @@ with tf.Graph().as_default():
         phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
         embedding_size = embeddings.get_shape()[1]
 
-        classifier_filename = '/home/afiq/Desktop/facetag/Face-Tag/models/ft_v2__classifier.pkl' #when using v2 the webcam crashes immediately
+        classifier_filename = '/home/afiq/Desktop/facetag/Face-Tag/models/ft_v2__classifier.pkl' 
         classifier_filename_exp = os.path.expanduser(classifier_filename)
         with open(classifier_filename_exp, 'rb') as infile:
             (model, class_names) = pickle.load(infile)
@@ -137,7 +137,7 @@ with tf.Graph().as_default():
                             len(best_class_indices)), best_class_indices]
                         # print(best_class_probabilities)
 
-                        if best_class_probabilities[0] > 0.3136:
+                        if best_class_probabilities[0] > 0.35:
 
                             cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2],
                                                                         bb[i][3]), (0, 255, 0), 2)  # boxing face
@@ -197,7 +197,7 @@ with tf.Graph().as_default():
                                     print("connection is closed")
 
 
-                        elif best_class_probabilities[0] > 0.01:
+                        elif best_class_probabilities[0] > 0.09:
 
                             cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2],
                                                                         bb[i][3]), (0, 255, 0), 2)  # boxing face

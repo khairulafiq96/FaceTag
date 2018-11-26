@@ -22,7 +22,6 @@ import pickle
 from sklearn.svm import SVC
 from sklearn.externals import joblib
 
-import csv
 import datetime
 
 import mysql.connector
@@ -131,7 +130,7 @@ with tf.Graph().as_default():
                         len(best_class_indices)), best_class_indices]
                     print(best_class_probabilities)
 
-                    if best_class_probabilities[0] > 0.3136:
+                    if best_class_probabilities[0] > 0.28:
 
                         cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2],
                                                                     bb[i][3]), (0, 255, 0), 2)  # boxing face
@@ -144,10 +143,6 @@ with tf.Graph().as_default():
                         cv2.putText(frame, result_names, (text_x, text_y),
                                     cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255),
                                     thickness=1, lineType=2)
-
-                        #insert datastamp into file
-                        out_file = open("writeTime.csv", "a")
-                        writer = csv.writer(out_file)
 
                         try:
                            connection = mysql.connector.connect(host='localhost',
@@ -162,7 +157,6 @@ with tf.Graph().as_default():
                            time_in = datetime.datetime.now().strftime("%H:%M")
                            time_out = datetime.datetime.now().strftime("%H:%M")
 
-                           print(date_in)
 
                            sql_select_query = "SELECT * FROM userData WHERE username = %s AND date = %s"
                            val = (username,date_in)

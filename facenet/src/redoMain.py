@@ -8,6 +8,7 @@ gi.require_version('Gtk','3.0')
 from gi.repository import Gtk
 
 import configparser
+from pathlib import Path
 
 import mysql.connector
 from mysql.connector import Error
@@ -84,10 +85,25 @@ class Example:
         f.write( 'globalFilepath = ' + filepath + '\n' )
         f.close()
 
-        print("Filepath : "+ filepath)
-
         btn_proceed_sensitivity = self.builder.get_object("btnProceed")
-        btn_proceed_sensitivity.set_sensitive(True)
+        #print(filepath.lower().endswith(('.jpg' ,'.jpeg','.png')))
+
+        if filepath.lower().endswith(('.jpg' ,'.jpeg','.png')) is True:
+            print("Filepath : "+ filepath+ '\n')
+            btn_proceed_sensitivity.set_sensitive(True)
+        else:
+            x.window.hide_on_delete()
+            btn_proceed_sensitivity.set_sensitive(False)
+            print("Opening Error Message"+ '\n')
+            x.set_window("errorWin")
+
+    def btn_back(self,widget):
+        #print ("samlekom")
+        #print ("Runing Script..")
+        #os.system('python3 headerBar.py')
+        x.window.hide_on_delete()
+        print("Opening Main Window"+ '\n')
+        x.set_window("winMain")
 
     def btn_verify(self,widget):
         entryLbl_link = self.builder.get_object("tog_entryLabel")
